@@ -1,0 +1,11 @@
+[package]
+name = "final-redes"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crossbeam = "0.8.4"
+eframe = "0.31.1"
+egui = "0.31.1"
+egui_graphs = "0.25.1"
+petgraph = "0.8.2"
