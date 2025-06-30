@@ -6,7 +6,7 @@ use egui_graphs::{
 };
 use petgraph::{
     Undirected,
-    graph::EdgeIndex,
+    graph::{EdgeIndex, NodeIndex},
     stable_graph::{StableGraph, StableUnGraph},
 };
 
@@ -14,17 +14,26 @@ mod drawers;
 
 pub struct UndirectedApp {
     g: Graph<(), f32, Undirected>,
+    selected_node: Option<NodeIndex>,
 }
 
 impl UndirectedApp {
     fn new(_: &CreationContext<'_>) -> Self {
         let g = generate_graph();
-        Self { g: Graph::from(&g) }
+        Self {
+            g: Graph::from(&g),
+            selected_node: Option::default(),
+        }
     }
-}
 
-impl App for UndirectedApp {
-    fn update(&mut self, ctx: &Context, _: &mut eframe::Frame) {
+    fn read_selected(&mut self) {
+        if !self.g.selected_nodes().is_empty() {
+            let idx = self.g.selected_nodes().first().unwrap();
+            self.selected_node = Some(*idx);
+        }
+    }
+
+    fn render(&mut self, ctx: &Context) {
         egui::SidePanel::right("right_panel")
             .min_width(250.)
             .max_width(500.)
@@ -32,12 +41,16 @@ impl App for UndirectedApp {
                 ScrollArea::vertical().show(ui, |ui| {
                     CollapsingHeader::new("Grafo")
                         .default_open(true)
-                        .show(ui, |ui| drawers::draw_section_graph(ui, &mut self.g));
+                        .show(ui, |ui| {
+                            drawers::draw_section_graph(ui, &mut self.g, self.selected_node)
+                        });
                 })
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let interaction_settings = &SettingsInteraction::new().with_dragging_enabled(true);
+            let interaction_settings = &SettingsInteraction::new()
+                .with_dragging_enabled(true)
+                .with_node_selection_enabled(true);
             let style_settings = &SettingsStyle::new().with_labels_always(true);
             let navigation_settings = &SettingsNavigation::new()
                 .with_zoom_and_pan_enabled(true)
@@ -52,6 +65,13 @@ impl App for UndirectedApp {
                 .with_styles(style_settings),
             );
         });
+    }
+}
+
+impl App for UndirectedApp {
+    fn update(&mut self, ctx: &Context, _: &mut eframe::Frame) {
+        self.read_selected();
+        self.render(ctx);
 
         // make edge labels show edge weight
         for idx in 0..self.g.edge_count() {
