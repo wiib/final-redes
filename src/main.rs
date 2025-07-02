@@ -15,14 +15,19 @@ mod drawers;
 pub struct UndirectedApp {
     g: Graph<(), f32, Undirected>,
     selected_node: Option<NodeIndex>,
+    g_cb_dest_node_idx: usize,
+    g_te_edge_weight: String,
 }
 
 impl UndirectedApp {
     fn new(_: &CreationContext<'_>) -> Self {
         let g = generate_graph();
+
         Self {
             g: Graph::from(&g),
             selected_node: Option::default(),
+            g_cb_dest_node_idx: 0,
+            g_te_edge_weight: String::default(),
         }
     }
 
@@ -42,7 +47,13 @@ impl UndirectedApp {
                     CollapsingHeader::new("Grafo")
                         .default_open(true)
                         .show(ui, |ui| {
-                            drawers::draw_section_graph(ui, &mut self.g, self.selected_node)
+                            drawers::draw_section_graph(
+                                ui,
+                                &mut self.g,
+                                self.selected_node,
+                                &mut self.g_cb_dest_node_idx,
+                                &mut self.g_te_edge_weight,
+                            );
                         });
                 })
             });
